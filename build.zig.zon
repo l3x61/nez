@@ -1,0 +1,19 @@
+.{
+    .name = "nez",
+    .version = "0.0.0",
+    .minimum_zig_version = "0.13.0",
+    .dependencies = .{
+        .system_sdk = .{ .path = "libs/system-sdk" },
+        .zglfw = .{ .path = "libs/zglfw" },
+        .zgui = .{ .path = "libs/zgui" },
+        .zopengl = .{ .path = "libs/zopengl" },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "lib",
+        "src",
+        "LICENSE",
+        "README.md",
+    },
+}
