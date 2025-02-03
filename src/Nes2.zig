@@ -1,0 +1,167 @@
+//! NES 2.0 file format (backwards compatible with iNES)
+//! https://www.nesdev.org/wiki/NES_2.0
+//!
+//! TODO:
+//! misc rom is not implemented https://www.nesdev.org/wiki/NES_2.0#Miscellaneous_ROM_Area
+
+const Nes2 = @This();
+
+const std = @import("std");
+const fs = std.fs;
+const mem = std.mem;
+const math = std.math;
+const Allocator = std.mem.Allocator;
+
+const header_size = 16;
+const header_magic = "NES\x1A";
+const trainer_size = 512;
+const prg_rom_multiplier = 16384;
+const chr_rom_multiplier = 8192;
+const pc_inst_rom_size = 8192;
+const pc_prom_size = 32; // 16 bytes Data, 16 bytes CounterOut
+const title_size = 128;
+
+const Error = error{
+    FileFormatNotSupported,
+};
+
+const Header = struct {
+    magic: [4]u8,
+    prg_rom_size_lsb: u8,
+    chr_rom_size_lsb: u8,
+    flags_6: packed struct {
+        nametable_layout: u1,
+        battery: u1,
+        trainer: u1,
+        alternative_nametable: u1,
+        mapper_lsb: u4,
+    },
+    flags_7: packed struct {
+        console_type: enum(u2) {
+            nes = 0,
+            vs_system = 1,
+            playchoice_10 = 2,
+            extended_console_type = 3,
+        },
+        nes2_identifier: u2,
+        mapper_mid: u4,
+    },
+    flags_8: packed struct {
+        mapper_msb: u4,
+        submapper: u4,
+    },
+    flags_9: packed struct {
+        prg_rom_size_msb: u4,
+        chr_rom_size_msb: u4,
+    },
+    flags_10: packed struct {
+        prg_ram_size: u4,
+        prg_nvram_size: u4,
+    },
+    flags_11: packed struct {
+        chr_ram_size: u4,
+        chr_nvram_size: u4,
+    },
+    flags_12: packed struct {
+        timing_mode: enum(u2) {
+            ntsc = 0,
+            pal = 1,
+            multi_region = 2,
+            dendy = 3,
+        },
+    },
+    flags_13: union {
+        vs: packed struct {
+            ppu_kind: u4,
+            hardware_kind: u4,
+        },
+        ext: packed struct {
+            kind: u4,
+            _: u4,
+        },
+    },
+    flags_14: packed struct {
+        misc_roms: u2,
+        _: u6,
+    },
+    flags_15: packed struct {
+        default_expansion_device: u6,
+        _: u2,
+    },
+
+    test "header size" {
+        try std.testing.expectEqual(header_size, @sizeOf(@This()));
+    }
+};
+
+allocator: Allocator = undefined,
+header: Header = undefined,
+trainer: []u8 = undefined,
+prg_rom: []u8 = undefined,
+chr_rom: []u8 = undefined,
+
+pub fn init(allocator: Allocator, path: []const u8) !Nes2 {
+    const file = try fs.cwd().openFile(path, .{});
+    defer file.close();
+
+    var self = Nes2{};
+
+    self.allocator = allocator;
+
+    // header
+    _ = try file.read(mem.asBytes(&self.header));
+    if (mem.eql(u8, header_magic, &self.header.magic) == false) {
+        return error.NesFileInvalidHeader;
+    }
+
+    // trainer
+    if (self.header.flags_6.trainer == 1) {
+        self.trainer = try allocator.alloc(u8, trainer_size);
+        _ = try file.read(self.trainer);
+    }
+
+    // prg_rom
+    var pgr_rom_size: usize = undefined;
+    switch (self.header.flags_9.prg_rom_size_msb) {
+        0x0...0xE => {
+            const lsb: usize = self.header.prg_rom_size_lsb;
+            const msb: usize = self.header.flags_9.prg_rom_size_msb;
+            pgr_rom_size = ((msb << 8) | lsb) * prg_rom_multiplier;
+        },
+        0xF => {
+            const lsb: usize = self.header.prg_rom_size_lsb;
+            const multiplier: usize = lsb & 0b0011;
+            const exponent: usize = (lsb >> 2) & 0b0011_1111;
+            pgr_rom_size = math.pow(usize, 2, exponent) * (multiplier * 2 + 1);
+        },
+    }
+    self.prg_rom = try allocator.alloc(u8, pgr_rom_size);
+    _ = try file.read(self.prg_rom);
+
+    // chr_rom
+    var chr_rom_size: usize = undefined;
+    switch (self.header.flags_9.chr_rom_size_msb) {
+        0x0...0xE => {
+            const lsb: usize = self.header.chr_rom_size_lsb;
+            const msb: usize = self.header.flags_9.chr_rom_size_msb;
+            chr_rom_size = ((msb << 8) | lsb) * chr_rom_multiplier;
+        },
+        0xF => {
+            const lsb: usize = self.header.chr_rom_size_lsb;
+            const multiplier: usize = lsb & 0b0011;
+            const exponent: usize = (lsb >> 2) & 0b0011_1111;
+            chr_rom_size = math.pow(usize, 2, exponent) * (multiplier * 2 + 1);
+        },
+    }
+    self.chr_rom = try allocator.alloc(u8, chr_rom_size);
+    _ = try file.read(self.chr_rom);
+
+    // TODO: misc rom
+    return self;
+}
+
+pub fn deinit(self: *Nes2) void {
+    self.allocator.free(self.trainer);
+    self.allocator.free(self.prg_rom);
+    self.allocator.free(self.chr_rom);
+}

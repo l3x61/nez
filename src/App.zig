@@ -8,7 +8,7 @@ const glfw = @import("zglfw");
 const Window = glfw.Window;
 const opengl = @import("zopengl");
 
-const NesFile = @import("NesFile.zig");
+const Nes2 = @import("Nes2.zig");
 
 const Config = struct {
     title: [:0]const u8 = "NEZ",
@@ -107,6 +107,9 @@ pub fn deinit(self: *App) void {
 }
 
 pub fn run(self: *App) !void {
+    var nes_file = try Nes2.init(self.allocator, "assets/roms/tests/cpu_reset/registers.nes");
+    defer nes_file.deinit();
+
     while (!self.window.shouldClose()) {
         self.update();
         self.draw();
