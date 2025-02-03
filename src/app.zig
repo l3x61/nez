@@ -74,7 +74,7 @@ pub const App = struct {
         const scaled_font_size = config.font_size * scale_factor;
 
         _ = gui.io.addFontFromFile(
-            "assets/JetBrainsMono-Regular.ttf",
+            "assets/fonts/JetBrainsMono-Regular.ttf",
             scaled_font_size,
         );
 
@@ -82,7 +82,7 @@ pub const App = struct {
         font_config.merge_mode = true;
         const icon_ranges: [*]const gui.Wchar = &[_]gui.Wchar{ 0xe000, 0xf8ff, 0 };
         _ = gui.io.addFontFromFileWithConfig(
-            "assets/JetBrainsMonoNLNerdFontPropo-Regular.ttf",
+            "assets/fonts/JetBrainsMonoNLNerdFontPropo-Regular.ttf",
             scaled_font_size,
             font_config,
             icon_ranges,
