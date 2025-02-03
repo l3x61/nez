@@ -15,11 +15,8 @@ const Allocator = std.mem.Allocator;
 const header_size = 16;
 const header_magic = "NES\x1A";
 const trainer_size = 512;
-const prg_rom_unit_multiplier = 16384;
-const chr_rom_unit_multiplier = 8192;
-const pc_inst_rom_size = 8192;
-const pc_prom_size = 32; // 16 bytes Data, 16 bytes CounterOut
-const title_size = 128;
+const prg_rom_bank_size = 16384;
+const chr_rom_bank_size = 8192;
 
 const Error = error{
     FileFormatNotSupported,
@@ -98,11 +95,11 @@ const Header = struct {
     }
 
     pub fn prgRomSize(self: *Header) usize {
-        return xxxRomSize(self.flags_9.prg_rom_size_msb, self.prg_rom_size_lsb, prg_rom_unit_multiplier);
+        return xxxRomSize(self.flags_9.prg_rom_size_msb, self.prg_rom_size_lsb, prg_rom_bank_size);
     }
 
     pub fn chrRomSize(self: *Header) usize {
-        return xxxRomSize(self.flags_9.chr_rom_size_msb, self.chr_rom_size_lsb, chr_rom_unit_multiplier);
+        return xxxRomSize(self.flags_9.chr_rom_size_msb, self.chr_rom_size_lsb, chr_rom_bank_size);
     }
 
     fn xxxRomSize(msb: usize, lsb: usize, unit_multiplier: usize) usize {
