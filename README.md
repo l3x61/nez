@@ -4,7 +4,12 @@ NES emulator written in Zig.
 
 ## Dependencies
 - [Zig 0.13.0](https://ziglang.org/download/)
-- [zig-gamedev](https://github.com/zig-gamedev/zig-gamedev) (already included)
+
+### Included Dependencies
+- [zig-gamedev](https://github.com/zig-gamedev/zig-gamedev)
+- [JetBrainsMono](https://www.jetbrains.com/lp/mono/)
+- [NerdFont](https://www.nerdfonts.com/)
+- [nes-test-roms](https://github.com/christopherpow/nes-test-roms)
 
 ## References
 - [NES Architecture](https://www.copetti.org/writings/consoles/nes/)
