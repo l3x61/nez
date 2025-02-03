@@ -89,6 +89,46 @@ const Header = struct {
         _: u2,
     },
 
+    pub fn checkMagic(self: *Header) bool {
+        return mem.eql(u8, header_magic, &self.magic);
+    }
+
+    pub fn hasTrainer(self: *Header) bool {
+        return self.flags_6.trainer == 1;
+    }
+
+    pub fn prgRomSize(self: *Header) usize {
+        switch (self.flags_9.prg_rom_size_msb) {
+            0x0...0xE => {
+                const lsb: usize = self.prg_rom_size_lsb;
+                const msb: usize = self.flags_9.prg_rom_size_msb;
+                return ((msb << 8) | lsb) * prg_rom_multiplier;
+            },
+            0xF => {
+                const lsb: usize = self.prg_rom_size_lsb;
+                const multiplier: usize = lsb & 0b0011;
+                const exponent: usize = (lsb >> 2) & 0b0011_1111;
+                return math.pow(usize, 2, exponent) * (multiplier * 2 + 1);
+            },
+        }
+    }
+
+    pub fn chrRomSize(self: *Header) usize {
+        switch (self.flags_9.chr_rom_size_msb) {
+            0x0...0xE => {
+                const lsb: usize = self.chr_rom_size_lsb;
+                const msb: usize = self.flags_9.chr_rom_size_msb;
+                return ((msb << 8) | lsb) * chr_rom_multiplier;
+            },
+            0xF => {
+                const lsb: usize = self.chr_rom_size_lsb;
+                const multiplier: usize = lsb & 0b0011;
+                const exponent: usize = (lsb >> 2) & 0b0011_1111;
+                return math.pow(usize, 2, exponent) * (multiplier * 2 + 1);
+            },
+        }
+    }
+
     test "header size" {
         try std.testing.expectEqual(header_size, @sizeOf(@This()));
     }
@@ -110,50 +150,22 @@ pub fn init(allocator: Allocator, path: []const u8) !Nes2 {
 
     // header
     _ = try file.read(mem.asBytes(&self.header));
-    if (mem.eql(u8, header_magic, &self.header.magic) == false) {
+    if (!self.header.checkMagic()) {
         return error.NesFileInvalidHeader;
     }
 
     // trainer
-    if (self.header.flags_6.trainer == 1) {
+    if (self.header.hasTrainer()) {
         self.trainer = try allocator.alloc(u8, trainer_size);
         _ = try file.read(self.trainer);
     }
 
     // prg_rom
-    var pgr_rom_size: usize = undefined;
-    switch (self.header.flags_9.prg_rom_size_msb) {
-        0x0...0xE => {
-            const lsb: usize = self.header.prg_rom_size_lsb;
-            const msb: usize = self.header.flags_9.prg_rom_size_msb;
-            pgr_rom_size = ((msb << 8) | lsb) * prg_rom_multiplier;
-        },
-        0xF => {
-            const lsb: usize = self.header.prg_rom_size_lsb;
-            const multiplier: usize = lsb & 0b0011;
-            const exponent: usize = (lsb >> 2) & 0b0011_1111;
-            pgr_rom_size = math.pow(usize, 2, exponent) * (multiplier * 2 + 1);
-        },
-    }
-    self.prg_rom = try allocator.alloc(u8, pgr_rom_size);
+    self.prg_rom = try allocator.alloc(u8, self.header.prgRomSize());
     _ = try file.read(self.prg_rom);
 
     // chr_rom
-    var chr_rom_size: usize = undefined;
-    switch (self.header.flags_9.chr_rom_size_msb) {
-        0x0...0xE => {
-            const lsb: usize = self.header.chr_rom_size_lsb;
-            const msb: usize = self.header.flags_9.chr_rom_size_msb;
-            chr_rom_size = ((msb << 8) | lsb) * chr_rom_multiplier;
-        },
-        0xF => {
-            const lsb: usize = self.header.chr_rom_size_lsb;
-            const multiplier: usize = lsb & 0b0011;
-            const exponent: usize = (lsb >> 2) & 0b0011_1111;
-            chr_rom_size = math.pow(usize, 2, exponent) * (multiplier * 2 + 1);
-        },
-    }
-    self.chr_rom = try allocator.alloc(u8, chr_rom_size);
+    self.chr_rom = try allocator.alloc(u8, self.header.chrRomSize());
     _ = try file.read(self.chr_rom);
 
     // TODO: misc rom
