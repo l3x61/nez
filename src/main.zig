@@ -1,5 +1,5 @@
 const std = @import("std");
-const App = @import("app.zig").App;
+const App = @import("App.zig");
 
 pub fn main() !void {
     var gpa_state = std.heap.GeneralPurposeAllocator(.{}){};
@@ -9,4 +9,8 @@ pub fn main() !void {
     var app = try App.init(gpa, .{});
     defer app.deinit();
     try app.run();
+}
+
+test "all" {
+    _ = @import("App.zig");
 }
