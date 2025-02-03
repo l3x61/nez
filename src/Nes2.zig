@@ -15,8 +15,8 @@ const Allocator = std.mem.Allocator;
 const header_size = 16;
 const header_magic = "NES\x1A";
 const trainer_size = 512;
-const prg_rom_multiplier = 16384;
-const chr_rom_multiplier = 8192;
+const prg_rom_unit_multiplier = 16384;
+const chr_rom_unit_multiplier = 8192;
 const pc_inst_rom_size = 8192;
 const pc_prom_size = 32; // 16 bytes Data, 16 bytes CounterOut
 const title_size = 128;
@@ -98,30 +98,20 @@ const Header = struct {
     }
 
     pub fn prgRomSize(self: *Header) usize {
-        switch (self.flags_9.prg_rom_size_msb) {
-            0x0...0xE => {
-                const lsb: usize = self.prg_rom_size_lsb;
-                const msb: usize = self.flags_9.prg_rom_size_msb;
-                return ((msb << 8) | lsb) * prg_rom_multiplier;
-            },
-            0xF => {
-                const lsb: usize = self.prg_rom_size_lsb;
-                const multiplier: usize = lsb & 0b0011;
-                const exponent: usize = (lsb >> 2) & 0b0011_1111;
-                return math.pow(usize, 2, exponent) * (multiplier * 2 + 1);
-            },
-        }
+        return xxxRomSize(self.flags_9.prg_rom_size_msb, self.prg_rom_size_lsb, prg_rom_unit_multiplier);
     }
 
     pub fn chrRomSize(self: *Header) usize {
-        switch (self.flags_9.chr_rom_size_msb) {
+        return xxxRomSize(self.flags_9.chr_rom_size_msb, self.chr_rom_size_lsb, chr_rom_unit_multiplier);
+    }
+
+    fn xxxRomSize(msb: usize, lsb: usize, unit_multiplier: usize) usize {
+        const nibble = @as(u4, @truncate(msb));
+        switch (nibble) {
             0x0...0xE => {
-                const lsb: usize = self.chr_rom_size_lsb;
-                const msb: usize = self.flags_9.chr_rom_size_msb;
-                return ((msb << 8) | lsb) * chr_rom_multiplier;
+                return ((msb << 8) | lsb) * unit_multiplier;
             },
             0xF => {
-                const lsb: usize = self.chr_rom_size_lsb;
                 const multiplier: usize = lsb & 0b0011;
                 const exponent: usize = (lsb >> 2) & 0b0011_1111;
                 return math.pow(usize, 2, exponent) * (multiplier * 2 + 1);
