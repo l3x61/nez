@@ -8,21 +8,23 @@ const glfw = @import("zglfw");
 const Window = glfw.Window;
 const opengl = @import("zopengl");
 
-const Nes2 = @import("Nes2.zig");
+const NesFile = @import("NesFile.zig");
 
 const Config = struct {
     title: [:0]const u8 = "NEZ",
-    width: c_int = 900,
-    height: c_int = 500,
+    width: c_int = 1600,
+    height: c_int = 900,
     gl_major: u32 = 4,
     gl_minor: u32 = 6,
-    font_size: f32 = 18.0,
+    font_size: f32 = 20.0,
     clear_color: [4]f32 = [_]f32{ 0.1, 0.1, 0.1, 1.0 },
 };
 
 allocator: Allocator,
 window: *Window,
 config: Config,
+nes_file: NesFile,
+scaled_font_size: usize,
 
 pub fn init(allocator: Allocator, config: Config) !App {
     var buffer: [1024]u8 = undefined;
@@ -43,7 +45,7 @@ pub fn init(allocator: Allocator, config: Config) !App {
         config.width,
         config.height,
         config.title,
-        glfw.Monitor.getPrimary(),
+        null,
     );
     window.setSizeLimits(
         config.width,
@@ -72,7 +74,7 @@ pub fn init(allocator: Allocator, config: Config) !App {
         const scale = window.getContentScale();
         break :scale_factor @max(scale[0], scale[1]);
     };
-    const scaled_font_size = config.font_size * scale_factor;
+    const scaled_font_size = @floor(config.font_size * scale_factor);
 
     _ = gui.io.addFontFromFile(
         "assets/fonts/JetBrainsMono-Regular.ttf",
@@ -96,10 +98,13 @@ pub fn init(allocator: Allocator, config: Config) !App {
         .allocator = allocator,
         .window = window,
         .config = config,
+        .nes_file = try NesFile.init(allocator, "assets/roms/tests/cpu_reset/registers.nes"),
+        .scaled_font_size = @as(usize, @intFromFloat(scaled_font_size)),
     };
 }
 
 pub fn deinit(self: *App) void {
+    defer self.nes_file.deinit();
     gui.backend.deinit();
     gui.deinit();
     self.window.destroy();
@@ -107,9 +112,6 @@ pub fn deinit(self: *App) void {
 }
 
 pub fn run(self: *App) !void {
-    var nes_file = try Nes2.init(self.allocator, "assets/roms/tests/cpu_reset/registers.nes");
-    defer nes_file.deinit();
-
     while (!self.window.shouldClose()) {
         self.update();
         self.draw();
@@ -131,7 +133,12 @@ inline fn draw(self: *App) void {
     gui.backend.newFrame(@intCast(fb_size[0]), @intCast(fb_size[1]));
 
     gui.showDemoWindow(null);
+    self.nes_file.draw();
 
     gui.backend.draw();
     self.window.swapBuffers();
+}
+
+inline fn drawMenu(self: *App) void {
+    _ = self;
 }
