@@ -108,7 +108,7 @@ pub fn deinit(self: *App) void {
 }
 
 pub fn run(self: *App) void {
-    while (!self.window.shouldClose()) {
+    while (!self.window.shouldClose() and self.window.getKey(.escape) != .press) {
         self.update();
         self.draw();
     }
@@ -124,10 +124,11 @@ inline fn draw(self: *App) void {
     const gl = opengl.bindings;
     gl.clearBufferfv(gl.COLOR, 0, &self.config.clear_color);
 
-    // draw
+    // draw gui
     const fb_size = self.window.getFramebufferSize();
     gui.backend.newFrame(@intCast(fb_size[0]), @intCast(fb_size[1]));
 
+    self.drawMenu();
     self.nes_file.draw();
 
     gui.backend.draw();
@@ -135,5 +136,17 @@ inline fn draw(self: *App) void {
 }
 
 inline fn drawMenu(self: *App) void {
-    _ = self;
+    // _ = self;
+    if (gui.beginMainMenuBar()) {
+        if (gui.beginMenu("File", true)) {
+            if (gui.menuItem("Open ROM", .{})) {
+                // TODO
+            }
+            if (gui.menuItem("Quit", .{})) {
+                glfw.setWindowShouldClose(self.window, true);
+            }
+            gui.endMenu();
+        }
+        gui.endMainMenuBar();
+    }
 }

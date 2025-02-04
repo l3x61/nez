@@ -1,6 +1,6 @@
 .{
     .name = "nez",
-    .version = "0.14.0-dev.2577+271452d22",
+    .version = "0.1.0",
     .dependencies = .{
         .system_sdk = .{
             .url = "https://github.com/zig-gamedev/system_sdk/archive/bf49d627a191e339f70e72668c8333717fb969b0.tar.gz",
