@@ -18,6 +18,9 @@ const trainer_size = 512;
 const prg_rom_bank_size = 16 * 1024;
 const chr_rom_bank_size = 8 * 1024;
 
+const gui = @import("zgui");
+const drawHexView = @import("HexView.zig").drawHexView;
+
 const Error = error{
     FileFormatNotSupported,
 };
@@ -226,16 +229,10 @@ pub fn deinit(self: *NesFile) void {
     self.allocator.free(self.chr_rom);
 }
 
-const gui = @import("zgui");
-
 pub fn draw(self: *NesFile) void {
     if (gui.begin("NES File", .{})) {
-        defer gui.end();
-
         if (gui.collapsingHeader("Information", .{ .default_open = true })) {
-            if (gui.beginTable("Table##Information", .{ .column = 2, .flags = .{ .resizable = true } })) {
-                defer gui.endTable();
-
+            if (gui.beginTable("Table Information", .{ .column = 2, .flags = .{ .resizable = true } })) {
                 gui.tableSetupColumn("Name", .{});
                 gui.tableSetupColumn("Value", .{});
 
@@ -282,55 +279,28 @@ pub fn draw(self: *NesFile) void {
                 _ = gui.tableNextColumn();
                 gui.text("{s}", .{self.header.flags_12.timing_mode});
             }
+            gui.endTable();
         }
 
         const header = mem.asBytes(&self.header);
         if (gui.collapsingHeader("Header", .{})) {
-            drawHexTable(header);
+            drawHexView("Header Memory", header);
         }
 
         const trainer = self.trainer;
         if (gui.collapsingHeader("Trainer", .{})) {
-            drawHexTable(trainer);
+            drawHexView("Trainer Memory", trainer);
         }
 
         const prg_rom = self.prg_rom;
         if (gui.collapsingHeader("PRG ROM", .{})) {
-            drawHexTable(prg_rom);
+            drawHexView("PRG ROM Memory", prg_rom);
         }
 
         const chr_rom = self.chr_rom;
         if (gui.collapsingHeader("CHR ROM", .{})) {
-            drawHexTable(chr_rom);
+            drawHexView("CHR ROM Memory", chr_rom);
         }
     }
-}
-
-fn drawHexTable(bytes: []const u8) void {
-    if (bytes.len == 0) {
-        gui.text("empty", .{});
-        return;
-    }
-    const hex_columns = 16;
-    var address: usize = 0;
-
-    gui.ListClipper.
-
-    for (0.., bytes) |i, byte| {
-        if (i % hex_columns == 0) {
-            if (i > 0) {
-                gui.newLine();
-            }
-            gui.text("{x:0>8}:", .{address});
-            gui.sameLine(.{});
-            address += hex_columns;
-        }
-        if ((i % 8 == 0) and (i % hex_columns != 0)) {
-            gui.text(" ", .{});
-            gui.sameLine(.{});
-        }
-        gui.text("{x:0>2}", .{byte});
-        gui.sameLine(.{});
-    }
-    gui.newLine();
+    gui.end();
 }

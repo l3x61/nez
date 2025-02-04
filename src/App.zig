@@ -107,7 +107,7 @@ pub fn deinit(self: *App) void {
     glfw.terminate();
 }
 
-pub fn run(self: *App) !void {
+pub fn run(self: *App) void {
     while (!self.window.shouldClose()) {
         self.update();
         self.draw();
@@ -128,7 +128,6 @@ inline fn draw(self: *App) void {
     const fb_size = self.window.getFramebufferSize();
     gui.backend.newFrame(@intCast(fb_size[0]), @intCast(fb_size[1]));
 
-    gui.showDemoWindow(null);
     self.nes_file.draw();
 
     gui.backend.draw();
