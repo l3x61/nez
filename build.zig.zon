@@ -1,13 +1,25 @@
 .{
     .name = "nez",
-    .version = "0.0.0",
-    .minimum_zig_version = "0.13.0",
+    .version = "0.14.0-dev.2577+271452d22",
     .dependencies = .{
-        .system_sdk = .{ .path = "libs/system-sdk" },
-        .zglfw = .{ .path = "libs/zglfw" },
-        .zgui = .{ .path = "libs/zgui" },
-        .zopengl = .{ .path = "libs/zopengl" },
+        .system_sdk = .{
+            .url = "https://github.com/zig-gamedev/system_sdk/archive/bf49d627a191e339f70e72668c8333717fb969b0.tar.gz",
+            .hash = "122047a9298c4c9dd43389d418d6826d469b192246ba0944102964cdc57f94c562df",
+        },
+        .zglfw = .{
+            .url = "https://github.com/zig-gamedev/zglfw/archive/5aaf806521bbda4385b1041d9448bd0c40192a1c.tar.gz",
+            .hash = "12202db5d18aa92ae61b0e47c11ec517eeb5984d8e2647ff513807ff30a444fef49a",
+        },
+        .zgui = .{
+            .url = "https://github.com/zig-gamedev/zgui/archive/5fb1c3b935b311e88352b0ffee29e7ad56da9722.tar.gz",
+            .hash = "12204f82e0475ddfd6a57d97f74bcf9052452c0eb2fa863cf0e3bce1071d2603e9f4",
+        },
+        .zopengl = .{
+            .url = "https://github.com/zig-gamedev/zopengl/archive/c9c293a9af388478bca0ad52007a72372ef71747.tar.gz",
+            .hash = "1220c030f5e33e09bd80fe7a7b064b65e1fc02e9bbf603ba04716866c9f1ca16f8ce",
+        },
     },
+
     .paths = .{
         "build.zig",
         "build.zig.zon",

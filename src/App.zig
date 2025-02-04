@@ -14,8 +14,8 @@ const Config = struct {
     title: [:0]const u8 = "NEZ",
     width: c_int = 1600,
     height: c_int = 900,
-    gl_major: u32 = 4,
-    gl_minor: u32 = 6,
+    gl_major: c_int = 4,
+    gl_minor: c_int = 0,
     font_size: f32 = 20.0,
     clear_color: [4]f32 = [_]f32{ 0.1, 0.1, 0.1, 1.0 },
 };
@@ -34,12 +34,12 @@ pub fn init(allocator: Allocator, config: Config) !App {
     // init glfw
     try glfw.init();
 
-    glfw.windowHintTyped(.context_version_major, @as(i32, @intCast(config.gl_major)));
-    glfw.windowHintTyped(.context_version_minor, @as(i32, @intCast(config.gl_minor)));
-    glfw.windowHintTyped(.opengl_profile, .opengl_core_profile);
-    glfw.windowHintTyped(.opengl_forward_compat, true);
-    glfw.windowHintTyped(.client_api, .opengl_api);
-    glfw.windowHintTyped(.doublebuffer, true);
+    glfw.windowHint(.context_version_major, config.gl_major);
+    glfw.windowHint(.context_version_minor, config.gl_minor);
+    glfw.windowHint(.opengl_profile, .opengl_core_profile);
+    glfw.windowHint(.opengl_forward_compat, true);
+    glfw.windowHint(.client_api, .opengl_api);
+    glfw.windowHint(.doublebuffer, true);
 
     const window = try glfw.Window.create(
         config.width,
@@ -59,17 +59,13 @@ pub fn init(allocator: Allocator, config: Config) !App {
 
     try opengl.loadCoreProfile(
         glfw.getProcAddress,
-        config.gl_major,
-        config.gl_minor,
+        @as(u32, @intCast(config.gl_major)),
+        @as(u32, @intCast(config.gl_minor)),
     );
 
     // init gui
     gui.init(allocator);
 
-    gui.io.setConfigFlags(.{
-        .dock_enable = true,
-        .viewport_enable = true,
-    });
     const scale_factor = scale_factor: {
         const scale = window.getContentScale();
         break :scale_factor @max(scale[0], scale[1]);

@@ -286,54 +286,22 @@ pub fn draw(self: *NesFile) void {
 
         const header = mem.asBytes(&self.header);
         if (gui.collapsingHeader("Header", .{})) {
-            if (gui.beginChild("HexTable##Header", .{
-                .child_flags = .{
-                    .auto_resize_x = true,
-                    .auto_resize_y = true,
-                },
-            })) {
-                defer gui.endChild();
-                drawHexTable(header);
-            }
+            drawHexTable(header);
         }
 
         const trainer = self.trainer;
         if (gui.collapsingHeader("Trainer", .{})) {
-            if (gui.beginChild("HexTable##Trainer", .{
-                .child_flags = .{
-                    .auto_resize_x = true,
-                    .auto_resize_y = true,
-                },
-            })) {
-                defer gui.endChild();
-                drawHexTable(trainer);
-            }
+            drawHexTable(trainer);
         }
 
         const prg_rom = self.prg_rom;
         if (gui.collapsingHeader("PRG ROM", .{})) {
-            if (gui.beginChild("HexTable##PRG ROM", .{
-                .child_flags = .{
-                    .auto_resize_x = true,
-                    .auto_resize_y = true,
-                },
-            })) {
-                defer gui.endChild();
-                drawHexTable(prg_rom);
-            }
+            drawHexTable(prg_rom);
         }
 
         const chr_rom = self.chr_rom;
         if (gui.collapsingHeader("CHR ROM", .{})) {
-            if (gui.beginChild("HexTable##CHR ROM", .{
-                .child_flags = .{
-                    .auto_resize_x = true,
-                    .auto_resize_y = true,
-                },
-            })) {
-                defer gui.endChild();
-                drawHexTable(chr_rom);
-            }
+            drawHexTable(chr_rom);
         }
     }
 }
@@ -345,6 +313,8 @@ fn drawHexTable(bytes: []const u8) void {
     }
     const hex_columns = 16;
     var address: usize = 0;
+
+    gui.ListClipper.
 
     for (0.., bytes) |i, byte| {
         if (i % hex_columns == 0) {
