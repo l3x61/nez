@@ -18,6 +18,10 @@
             .url = "https://github.com/zig-gamedev/zopengl/archive/c9c293a9af388478bca0ad52007a72372ef71747.tar.gz",
             .hash = "1220c030f5e33e09bd80fe7a7b064b65e1fc02e9bbf603ba04716866c9f1ca16f8ce",
         },
+        .zosdialog = .{
+            .url = "https://github.com/l3x61/zosdialog/archive/refs/tags/0.1.5.tar.gz",
+            .hash = "1220caf19fda52fc11fce5c0eed252aa4c0c6d480aad472d3b545c388961bc33d640",
+        },
     },
 
     .paths = .{

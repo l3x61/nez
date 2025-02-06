@@ -1,6 +1,7 @@
 const App = @This();
 
 const std = @import("std");
+const print = std.debug.print;
 const Allocator = std.mem.Allocator;
 
 const gui = @import("zgui");
@@ -9,6 +10,14 @@ const Window = glfw.Window;
 const opengl = @import("zopengl");
 
 const NesFile = @import("NesFile.zig");
+
+const osd = @import("zosdialog");
+
+allocator: Allocator,
+window: *Window,
+config: Config,
+nes_file: NesFile,
+scaled_font_size: usize,
 
 const Config = struct {
     title: [:0]const u8 = "NEZ",
@@ -19,12 +28,6 @@ const Config = struct {
     font_size: f32 = 20.0,
     clear_color: [4]f32 = [_]f32{ 0.1, 0.1, 0.1, 1.0 },
 };
-
-allocator: Allocator,
-window: *Window,
-config: Config,
-nes_file: NesFile,
-scaled_font_size: usize,
 
 pub fn init(allocator: Allocator, config: Config) !App {
     var buffer: [1024]u8 = undefined;
@@ -100,26 +103,26 @@ pub fn init(allocator: Allocator, config: Config) !App {
 }
 
 pub fn deinit(self: *App) void {
-    defer self.nes_file.deinit();
+    self.nes_file.deinit();
     gui.backend.deinit();
     gui.deinit();
     self.window.destroy();
     glfw.terminate();
 }
 
-pub fn run(self: *App) void {
+pub fn run(self: *App) !void {
     while (!self.window.shouldClose() and self.window.getKey(.escape) != .press) {
         self.update();
-        self.draw();
+        try self.draw();
     }
 }
 
-inline fn update(self: *App) void {
+fn update(self: *App) void {
     _ = self;
     glfw.pollEvents();
 }
 
-inline fn draw(self: *App) void {
+fn draw(self: *App) !void {
     // clear
     const gl = opengl.bindings;
     gl.clearBufferfv(gl.COLOR, 0, &self.config.clear_color);
@@ -128,19 +131,23 @@ inline fn draw(self: *App) void {
     const fb_size = self.window.getFramebufferSize();
     gui.backend.newFrame(@intCast(fb_size[0]), @intCast(fb_size[1]));
 
-    self.drawMenu();
+    try self.drawMenu();
     self.nes_file.draw();
 
     gui.backend.draw();
     self.window.swapBuffers();
 }
 
-inline fn drawMenu(self: *App) void {
-    // _ = self;
+fn drawMenu(self: *App) !void {
     if (gui.beginMainMenuBar()) {
         if (gui.beginMenu("File", true)) {
             if (gui.menuItem("Open ROM", .{})) {
-                // TODO
+                if (try osd.file(self.allocator, .open, .{ .path = "." })) |filepath| {
+                    defer self.allocator.free(filepath);
+                    print("\t{s}\n", .{filepath});
+                } else {
+                    print("\tCanceled\n", .{});
+                }
             }
             if (gui.menuItem("Quit", .{})) {
                 glfw.setWindowShouldClose(self.window, true);

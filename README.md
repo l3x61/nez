@@ -14,3 +14,6 @@ NES emulator written in Zig.
 ## References
 - [NES Architecture](https://www.copetti.org/writings/consoles/nes/)
 - [Nesdev Wiki](https://www.nesdev.org/wiki/Nesdev_Wiki)
+
+## Issues
+- osdialog does not work on Wayland, most likely because `libdecor-gtk`

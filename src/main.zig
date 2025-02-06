@@ -8,7 +8,7 @@ pub fn main() !void {
 
     var app = try App.init(gpa, .{});
     defer app.deinit();
-    app.run();
+    try app.run();
 }
 
 test "all" {
