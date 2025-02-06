@@ -219,7 +219,6 @@ pub fn init(slice: []const u8) !NesFile {
 pub fn draw(self: NesFile) void {
     if (gui.beginChild("ROM", .{})) {
         gui.text("File Format: {s}", .{self.format});
-        gui.text("File Format: {s}", .{self.format});
 
         gui.separator();
 

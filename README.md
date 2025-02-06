@@ -1,6 +1,15 @@
 # NEZ
 NES emulator written in Zig.
 
+![screenshot](screenshot.png)
+
+## ToDo
+- [x] load NES file
+    - [ ] implement mappers
+- [ ] implement input devices
+- [ ] emulate CPU
+- [ ] emulate PPU
+- [ ] emulate APU
 
 ## Dependencies
 - [Zig 0.13.0](https://ziglang.org/download/)
@@ -10,6 +19,7 @@ NES emulator written in Zig.
 - [JetBrainsMono](https://www.jetbrains.com/lp/mono/)
 - [NerdFont](https://www.nerdfonts.com/)
 - [nes-test-roms](https://github.com/christopherpow/nes-test-roms)
+- [zosdialog](https://github.com/l3x61/zosdialog)
 
 ## References
 - [NES Architecture](https://www.copetti.org/writings/consoles/nes/)
