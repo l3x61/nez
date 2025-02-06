@@ -9,15 +9,13 @@ const glfw = @import("zglfw");
 const Window = glfw.Window;
 const opengl = @import("zopengl");
 
-const NesFile = @import("NesFile.zig");
-
-const osd = @import("zosdialog");
+const Cartridge = @import("Cartridge.zig");
 
 allocator: Allocator,
 window: *Window,
 config: Config,
-nes_file: NesFile,
 scaled_font_size: usize,
+cartridge: Cartridge,
 
 const Config = struct {
     title: [:0]const u8 = "NEZ",
@@ -25,7 +23,7 @@ const Config = struct {
     height: c_int = 900,
     gl_major: c_int = 4,
     gl_minor: c_int = 0,
-    font_size: f32 = 20.0,
+    font_size: f32 = 19.0,
     clear_color: [4]f32 = [_]f32{ 0.1, 0.1, 0.1, 1.0 },
 };
 
@@ -97,13 +95,13 @@ pub fn init(allocator: Allocator, config: Config) !App {
         .allocator = allocator,
         .window = window,
         .config = config,
-        .nes_file = try NesFile.init(allocator, "assets/roms/tests/cpu_reset/registers.nes"),
         .scaled_font_size = @as(usize, @intFromFloat(scaled_font_size)),
+        .cartridge = Cartridge.init(allocator),
     };
 }
 
 pub fn deinit(self: *App) void {
-    self.nes_file.deinit();
+    self.cartridge.deinit();
     gui.backend.deinit();
     gui.deinit();
     self.window.destroy();
@@ -132,7 +130,7 @@ fn draw(self: *App) !void {
     gui.backend.newFrame(@intCast(fb_size[0]), @intCast(fb_size[1]));
 
     try self.drawMenu();
-    self.nes_file.draw();
+    self.cartridge.draw();
 
     gui.backend.draw();
     self.window.swapBuffers();
@@ -141,13 +139,11 @@ fn draw(self: *App) !void {
 fn drawMenu(self: *App) !void {
     if (gui.beginMainMenuBar()) {
         if (gui.beginMenu("File", true)) {
-            if (gui.menuItem("Open ROM", .{})) {
-                if (try osd.file(self.allocator, .open, .{ .path = "." })) |filepath| {
-                    defer self.allocator.free(filepath);
-                    print("\t{s}\n", .{filepath});
-                } else {
-                    print("\tCanceled\n", .{});
-                }
+            if (gui.menuItem("Insert Cartridge", .{ .enabled = !self.cartridge.loaded })) {
+                try self.cartridge.insert();
+            }
+            if (gui.menuItem("Remove Cartridge", .{})) {
+                self.cartridge.remove();
             }
             if (gui.menuItem("Quit", .{})) {
                 glfw.setWindowShouldClose(self.window, true);

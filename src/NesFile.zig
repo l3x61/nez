@@ -1,8 +1,8 @@
 //! NES 2.0 file format (backwards compatible with iNES)
 //! https://www.nesdev.org/wiki/NES_2.0
 //!
-//! TODO:
-//!     - misc ROM is not implemented https://www.nesdev.org/wiki/NES_2.0#Miscellaneous_ROM_Area
+//! TODO
+//! - misc ROM is not implemented https://www.nesdev.org/wiki/NES_2.0#Miscellaneous_ROM_Area
 
 const NesFile = @This();
 
@@ -10,7 +10,6 @@ const std = @import("std");
 const fs = std.fs;
 const mem = std.mem;
 const math = std.math;
-const Allocator = std.mem.Allocator;
 
 const header_size = 16;
 const header_magic = "NES\x1A";
@@ -42,7 +41,7 @@ const Format = enum {
 };
 
 const Header = struct {
-    magic: [4]u8,
+    identifier: [4]u8,
     prg_rom_size_lsb: u8,
     chr_rom_size_lsb: u8,
     flags_6: packed struct {
@@ -117,16 +116,6 @@ const Header = struct {
         ppu_kind: u4,
         hardware_kind: u4,
     },
-    //    flags_13: union {
-    //        vs: packed struct {
-    //            ppu_kind: u4,
-    //            hardware_kind: u4,
-    //        },
-    //        ext: packed struct {
-    //            kind: u4,
-    //            _: u4,
-    //        },
-    //    },
     flags_14: packed struct {
         misc_roms: u2,
         _: u6,
@@ -136,27 +125,32 @@ const Header = struct {
         _: u2,
     },
 
-    /// assumes header starts with the correct MAGIC
-    pub fn getFormat(self: *Header) Format {
+    pub fn init(slice: *const [header_size]u8) Header {
+        const header: *Header = @ptrCast(@constCast(slice));
+        return header.*;
+    }
+
+    /// assumes header starts with the correct identifier
+    pub fn getFormat(self: Header) Format {
         return switch (self.flags_7.nes2_identifier) {
             2 => .nes2,
             else => .ines,
         };
     }
 
-    pub fn checkMagic(self: *Header) bool {
-        return mem.eql(u8, header_magic, &self.magic);
+    pub fn checkIdentifier(self: Header) bool {
+        return mem.eql(u8, header_magic, &self.identifier);
     }
 
-    pub fn hasTrainer(self: *Header) bool {
+    pub fn hasTrainer(self: Header) bool {
         return self.flags_6.trainer == 1;
     }
 
-    pub fn prgRomSize(self: *Header) usize {
+    pub fn prgRomSize(self: Header) usize {
         return xxxRomSize(self.flags_9.prg_rom_size_msb, self.prg_rom_size_lsb, prg_rom_bank_size);
     }
 
-    pub fn chrRomSize(self: *Header) usize {
+    pub fn chrRomSize(self: Header) usize {
         return xxxRomSize(self.flags_9.chr_rom_size_msb, self.chr_rom_size_lsb, chr_rom_bank_size);
     }
 
@@ -179,128 +173,79 @@ const Header = struct {
     }
 };
 
-allocator: Allocator = undefined,
-filepath: []u8 = undefined,
 header: Header = undefined,
 format: Format = undefined,
 trainer: []u8 = undefined,
 prg_rom: []u8 = undefined,
 chr_rom: []u8 = undefined,
 
-/// opens a file relative to fs.cwd()
-pub fn init(allocator: Allocator, filename: []const u8) !NesFile {
-    const file = try fs.cwd().openFile(filename, .{});
-    defer file.close();
+pub fn init(slice: []const u8) !NesFile {
+    var offset: usize = 0;
 
-    var self: NesFile = undefined;
+    const header = Header.init(slice[0..header_size]);
+    offset += header_size;
 
-    self.allocator = allocator;
-
-    self.filepath = try fs.realpathAlloc(allocator, filename);
-
-    // header
-    _ = try file.read(mem.asBytes(&self.header));
-    if (!self.header.checkMagic()) {
-        return error.NesFileInvalidHeader;
+    if (!header.checkIdentifier()) {
+        return Error.FileFormatNotSupported;
     }
 
-    self.format = self.header.getFormat();
+    const format = header.getFormat();
 
-    // trainer
-    self.trainer = try allocator.alloc(u8, if (self.header.hasTrainer()) trainer_size else 0);
-    _ = try file.read(self.trainer);
+    var trainer: []u8 = &.{};
+    if (header.hasTrainer()) {
+        trainer = @constCast(slice[offset .. offset + trainer_size]);
+        offset += trainer_size;
+    }
 
-    // prg_rom
-    self.prg_rom = try allocator.alloc(u8, self.header.prgRomSize());
-    _ = try file.read(self.prg_rom);
+    const prg_rom_size = header.prgRomSize();
+    const prg_rom = @constCast(slice[offset .. offset + prg_rom_size]);
+    offset += prg_rom_size;
 
-    // chr_rom
-    self.chr_rom = try allocator.alloc(u8, self.header.chrRomSize());
-    _ = try file.read(self.chr_rom);
+    const chr_rom_size = header.chrRomSize();
+    const chr_rom = @constCast(slice[offset .. offset + chr_rom_size]);
+    offset += chr_rom_size;
 
     // TODO: misc rom
-    return self;
+
+    return NesFile{
+        .header = header,
+        .format = format,
+        .trainer = trainer,
+        .prg_rom = prg_rom,
+        .chr_rom = chr_rom,
+    };
 }
 
-pub fn deinit(self: *NesFile) void {
-    self.allocator.free(self.filepath);
-    self.allocator.free(self.trainer);
-    self.allocator.free(self.prg_rom);
-    self.allocator.free(self.chr_rom);
-}
+pub fn draw(self: NesFile) void {
+    if (gui.beginChild("ROM", .{})) {
+        gui.text("File Format: {s}", .{self.format});
+        gui.text("File Format: {s}", .{self.format});
 
-pub fn draw(self: *NesFile) void {
-    if (gui.begin("NES File", .{})) {
-        if (gui.collapsingHeader("Information", .{ .default_open = true })) {
-            if (gui.beginTable("Table Information", .{ .column = 2, .flags = .{ .resizable = true } })) {
-                gui.tableSetupColumn("Name", .{});
-                gui.tableSetupColumn("Value", .{});
+        gui.separator();
 
-                // TODO: test on windows
-                if (mem.lastIndexOf(u8, self.filepath, "/")) |idx| {
-                    _ = gui.tableNextColumn();
-                    gui.text("Name", .{});
-                    _ = gui.tableNextColumn();
-                    gui.text("{s}", .{self.filepath[idx + 1 ..]});
+        gui.text("Console Type: {s}", .{self.header.flags_7.console_type});
+        gui.text("Timing Mode: {s}", .{self.header.flags_12.timing_mode});
 
-                    _ = gui.tableNextColumn();
-                    gui.text("Path", .{});
-                    _ = gui.tableNextColumn();
-                    gui.text("{s}", .{self.filepath[0 .. idx + 1]});
-                }
+        gui.separator();
 
-                _ = gui.tableNextColumn();
-                gui.text("Format", .{});
-                _ = gui.tableNextColumn();
-                gui.text("{s}", .{self.format});
-
-                _ = gui.tableNextColumn();
-                gui.text("Trainer Area Size", .{});
-                _ = gui.tableNextColumn();
-                gui.text("{d} bytes", .{0});
-
-                _ = gui.tableNextColumn();
-                gui.text("PRG-ROM Size", .{});
-                _ = gui.tableNextColumn();
-                gui.text("{d} bytes", .{self.header.prgRomSize()});
-
-                _ = gui.tableNextColumn();
-                gui.text("CHR-ROM Size", .{});
-                _ = gui.tableNextColumn();
-                gui.text("{d} bytes", .{self.header.chrRomSize()});
-
-                _ = gui.tableNextColumn();
-                gui.text("Console Type", .{});
-                _ = gui.tableNextColumn();
-                gui.text("{s}", .{self.header.flags_7.console_type});
-
-                _ = gui.tableNextColumn();
-                gui.text("Timing Mode", .{});
-                _ = gui.tableNextColumn();
-                gui.text("{s}", .{self.header.flags_12.timing_mode});
-            }
-            gui.endTable();
-        }
-
-        const header = mem.asBytes(&self.header);
-        if (gui.collapsingHeader("Header", .{})) {
-            drawHexView("Header Memory", header);
-        }
-
-        const trainer = self.trainer;
+        gui.text("Trainer Size: {d} bytes", .{self.trainer.len});
         if (gui.collapsingHeader("Trainer", .{})) {
-            drawHexView("Trainer Memory", trainer);
+            drawHexView("Trainer Memory", self.trainer);
         }
 
-        const prg_rom = self.prg_rom;
+        gui.separator();
+
+        gui.text("PRG ROM Size: {d} bytes", .{self.prg_rom.len});
         if (gui.collapsingHeader("PRG ROM", .{})) {
-            drawHexView("PRG ROM Memory", prg_rom);
+            drawHexView("PRG ROM Memory", self.prg_rom);
         }
 
-        const chr_rom = self.chr_rom;
+        gui.separator();
+
+        gui.text("CHR ROM Size: {d} bytes", .{self.chr_rom.len});
         if (gui.collapsingHeader("CHR ROM", .{})) {
-            drawHexView("CHR ROM Memory", chr_rom);
+            drawHexView("CHR ROM Memory", self.chr_rom);
         }
     }
-    gui.end();
+    gui.endChild();
 }
