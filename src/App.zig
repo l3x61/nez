@@ -130,7 +130,8 @@ fn draw(self: *App) !void {
     gui.backend.newFrame(@intCast(fb_size[0]), @intCast(fb_size[1]));
 
     try self.drawMenu();
-    self.nes.cartridge.draw();
+    try self.nes.draw();
+    gui.showDemoWindow(null);
 
     gui.backend.draw();
     self.window.swapBuffers();

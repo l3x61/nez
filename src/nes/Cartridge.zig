@@ -65,17 +65,32 @@ pub fn remove(self: *Cartridge) void {
     self.loaded = false;
 }
 
-pub fn draw(self: *Cartridge) void {
-    if (!self.loaded or !self.visible) return;
+pub fn draw(self: *Cartridge) !void {
+    if (!self.visible) return;
 
     if (gui.begin("Cartrige", .{})) {
-        if (gui.collapsingHeader("File Information", .{ .default_open = true })) {
-            gui.text("File Name: {s}", .{self.file_name});
-            gui.text("File Size: {d} bytes", .{self.file_data.len});
+        if (!self.loaded) {
+            const width = gui.getContentRegionAvail()[0];
+            if (gui.button("Insert Cartridge", .{ .w = width }) == true) {
+                try self.insert();
+            }
+        } else {
+            const width = gui.getContentRegionAvail()[0];
+            gui.pushStyleColor1u(.{ .idx = .button, .c = 0xFA424266 });
+            gui.pushStyleColor1u(.{ .idx = .button_hovered, .c = 0xFA4242FF });
+            gui.pushStyleColor1u(.{ .idx = .button_active, .c = 0xFA0F0FFF });
+            if (gui.button("Remove Cartridge", .{ .w = width }) == true) {
+                self.remove();
+            }
+            gui.popStyleColor(.{ .count = 3 });
+            if (gui.collapsingHeader("File Information", .{ .default_open = true })) {
+                gui.text("File Name: {s}", .{self.file_name});
+                gui.text("File Size: {d} bytes", .{self.file_data.len});
 
-            gui.separator();
+                gui.separator();
 
-            self.file_nes.draw();
+                self.file_nes.draw();
+            }
         }
     }
     gui.end();
