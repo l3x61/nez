@@ -18,7 +18,7 @@ const prg_rom_bank_size = 16 * 1024;
 const chr_rom_bank_size = 8 * 1024;
 
 const gui = @import("zgui");
-const drawHexView = @import("HexView.zig").drawHexView;
+const HexView = @import("HexView.zig");
 
 const Error = error{
     FileFormatNotSupported,
@@ -230,21 +230,21 @@ pub fn draw(self: NesFile) void {
 
         gui.text("Trainer Size: {d} bytes", .{self.trainer.len});
         if (gui.collapsingHeader("Trainer", .{})) {
-            drawHexView("Trainer Memory", self.trainer);
+            HexView.draw("Trainer Memory", self.trainer);
         }
 
         gui.separator();
 
         gui.text("PRG ROM Size: {d} bytes", .{self.prg_rom.len});
         if (gui.collapsingHeader("PRG ROM", .{})) {
-            drawHexView("PRG ROM Memory", self.prg_rom);
+            HexView.draw("PRG ROM Memory", self.prg_rom);
         }
 
         gui.separator();
 
         gui.text("CHR ROM Size: {d} bytes", .{self.chr_rom.len});
         if (gui.collapsingHeader("CHR ROM", .{})) {
-            drawHexView("CHR ROM Memory", self.chr_rom);
+            HexView.draw("CHR ROM Memory", self.chr_rom);
         }
     }
     gui.endChild();

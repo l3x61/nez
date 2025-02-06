@@ -9,13 +9,13 @@ const glfw = @import("zglfw");
 const Window = glfw.Window;
 const opengl = @import("zopengl");
 
-const Cartridge = @import("Cartridge.zig");
+const Nes = @import("nes/Nes.zig");
 
 allocator: Allocator,
 window: *Window,
 config: Config,
 scaled_font_size: usize,
-cartridge: Cartridge,
+nes: Nes,
 
 const Config = struct {
     title: [:0]const u8 = "NEZ",
@@ -96,12 +96,12 @@ pub fn init(allocator: Allocator, config: Config) !App {
         .window = window,
         .config = config,
         .scaled_font_size = @as(usize, @intFromFloat(scaled_font_size)),
-        .cartridge = Cartridge.init(allocator),
+        .nes = Nes.init(allocator),
     };
 }
 
 pub fn deinit(self: *App) void {
-    self.cartridge.deinit();
+    self.nes.deinit();
     gui.backend.deinit();
     gui.deinit();
     self.window.destroy();
@@ -130,7 +130,7 @@ fn draw(self: *App) !void {
     gui.backend.newFrame(@intCast(fb_size[0]), @intCast(fb_size[1]));
 
     try self.drawMenu();
-    self.cartridge.draw();
+    self.nes.cartridge.draw();
 
     gui.backend.draw();
     self.window.swapBuffers();
@@ -139,14 +139,21 @@ fn draw(self: *App) !void {
 fn drawMenu(self: *App) !void {
     if (gui.beginMainMenuBar()) {
         if (gui.beginMenu("File", true)) {
-            if (gui.menuItem("Insert Cartridge", .{ .enabled = !self.cartridge.loaded })) {
-                try self.cartridge.insert();
+            if (gui.menuItem("Insert Cartridge", .{ .enabled = !self.nes.cartridge.loaded })) {
+                try self.nes.cartridge.insert();
             }
-            if (gui.menuItem("Remove Cartridge", .{})) {
-                self.cartridge.remove();
+            if (gui.menuItem("Remove Cartridge", .{ .enabled = self.nes.cartridge.loaded })) {
+                self.nes.cartridge.remove();
             }
             if (gui.menuItem("Quit", .{})) {
                 glfw.setWindowShouldClose(self.window, true);
+            }
+            gui.endMenu();
+        }
+
+        if (gui.beginMenu("View", true)) {
+            if (gui.menuItem("Cartridge", .{ .selected = self.nes.cartridge.visible })) {
+                self.nes.cartridge.toggleVisibility();
             }
             gui.endMenu();
         }

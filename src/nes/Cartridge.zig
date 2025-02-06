@@ -11,7 +11,7 @@ const Allocator = std.mem.Allocator;
 
 const osd = @import("zosdialog");
 const gui = @import("zgui");
-const NesFile = @import("NesFile.zig");
+const NesFile = @import("../utils/NesFile.zig");
 
 allocator: Allocator = undefined,
 file_path: [:0]u8 = undefined,
@@ -22,6 +22,7 @@ trainer: []u8 = undefined,
 prg_rom: []u8 = undefined,
 chr_rom: []u8 = undefined,
 loaded: bool = false,
+visible: bool = false,
 filters: osd.Filters = undefined,
 
 pub fn init(allocator: Allocator) Cartridge {
@@ -47,7 +48,7 @@ pub fn insert(self: *Cartridge) !void {
         self.loaded = true;
 
         self.file_nes = NesFile.init(self.file_data) catch |err| {
-            print("{!}\n", .{err});
+            print("{!}\n", .{err}); // TODO: add a notification system and notify the user
             self.remove();
             return;
         };
@@ -65,7 +66,7 @@ pub fn remove(self: *Cartridge) void {
 }
 
 pub fn draw(self: *Cartridge) void {
-    if (!self.loaded) return;
+    if (!self.loaded or !self.visible) return;
 
     if (gui.begin("Cartrige", .{})) {
         if (gui.collapsingHeader("File Information", .{ .default_open = true })) {
@@ -78,4 +79,8 @@ pub fn draw(self: *Cartridge) void {
         }
     }
     gui.end();
+}
+
+pub fn toggleVisibility(self: *Cartridge) void {
+    self.visible = !self.visible;
 }

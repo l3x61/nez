@@ -1,6 +1,6 @@
 const gui = @import("zgui");
 
-pub fn drawHexView(label: [:0]const u8, bytes: []const u8) void {
+pub fn draw(label: [:0]const u8, bytes: []const u8) void {
     const bytes_per_row = 16;
     const half_per_row = @divFloor(bytes_per_row, 2);
     const rows = @divFloor(bytes.len, bytes_per_row);
