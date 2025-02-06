@@ -53,6 +53,7 @@ pub fn insert(self: *Cartridge) !void {
         };
         self.trainer = self.file_nes.trainer;
         self.prg_rom = self.file_nes.prg_rom;
+        self.chr_rom = self.file_nes.chr_rom;
     }
 }
 
