@@ -10,7 +10,3 @@ pub fn main() !void {
     defer app.deinit();
     try app.run();
 }
-
-test "all" {
-    _ = @import("App.zig");
-}
