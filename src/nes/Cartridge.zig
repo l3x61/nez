@@ -17,7 +17,7 @@ allocator: Allocator = undefined,
 file_path: [:0]u8 = undefined,
 file_name: [:0]u8 = undefined,
 file_data: []u8 = undefined,
-file_nes: NesFile = undefined, // fields point to `file_data`
+file_nes: NesFile = undefined, // fields  point to `file_data`
 trainer: []u8 = undefined,
 prg_rom: []u8 = undefined,
 chr_rom: []u8 = undefined,
@@ -81,6 +81,8 @@ pub fn draw(self: *Cartridge) !void {
             gui.pushStyleColor1u(.{ .idx = .button_active, .c = 0xFA0F0FFF });
             if (gui.button("Remove Cartridge", .{ .w = width }) == true) {
                 self.remove();
+                gui.end();
+                return;
             }
             gui.popStyleColor(.{ .count = 3 });
             if (gui.collapsingHeader("File Information", .{ .default_open = true })) {
