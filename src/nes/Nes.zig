@@ -57,9 +57,13 @@ pub fn draw(self: *@This(), dockspace_id: u32) !void {
 
 pub fn drawWindow(self: *@This()) !void {
     _ = gui.begin(self.window_name, .{});
-    if (gui.button("Power", .{})) {}
+    if (gui.button("Power", .{})) {
+        self.cpu.powerUp();
+    }
     gui.sameLine(.{});
-    if (gui.button("Reset", .{})) {}
+    if (gui.button("Reset", .{})) {
+        self.cpu.reset();
+    }
 
     if (!self.cartridge.loaded) {
         if (gui.button("Insert Cartridge", .{})) {

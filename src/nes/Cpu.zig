@@ -2,6 +2,7 @@
 const Cpu = @This();
 
 const std = @import("std");
+const mem = std.mem;
 
 const Nes = @import("Nes.zig");
 
@@ -69,7 +70,7 @@ const StatusRegister = packed struct {
 pub fn init(nes: *Nes) Cpu {
     var self = Cpu{};
     self.registers.powerUp();
-    self.registers.P.powerUp();
+    std.crypto.random.bytes(mem.asBytes(&self.registers));
     self.nes = nes;
     return self;
 }
@@ -84,10 +85,18 @@ pub fn read(self: @This(), address: u16) u8 {
 
 pub fn draw(self: @This()) void {
     _ = gui.begin(self.window_name, .{});
-    gui.text("A: {x:0<2}", .{self.registers.A});
-    gui.text("X: {x:0<2}", .{self.registers.X});
-    gui.text("Y: {x:0<2}", .{self.registers.Y});
+    gui.text("A:  {x:0<2}", .{self.registers.A});
+    gui.text("X:  {x:0<2}", .{self.registers.X});
+    gui.text("Y:  {x:0<2}", .{self.registers.Y});
     gui.text("PC: {x:0<4}", .{self.registers.PC});
-    gui.text("S: {x:0<2}", .{self.registers.S});
+    gui.text("S:  {x:0<2}", .{self.registers.S});
     gui.end();
+}
+
+pub fn powerUp(self: *@This()) void {
+    self.registers.powerUp();
+}
+
+pub fn reset(self: *@This()) void {
+    self.registers.reset();
 }
