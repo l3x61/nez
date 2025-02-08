@@ -89,6 +89,7 @@ pub fn init(allocator: Allocator, config: Config) !App {
     );
 
     gui.getStyle().scaleAllSizes(scale_factor);
+    gui.io.setConfigFlags(.{ .dock_enable = true });
     gui.backend.init(window);
 
     return App{
@@ -121,43 +122,16 @@ fn update(self: *App) void {
 }
 
 fn draw(self: *App) !void {
-    // clear
     const gl = opengl.bindings;
     gl.clearBufferfv(gl.COLOR, 0, &self.config.clear_color);
-
-    // draw gui
     const fb_size = self.window.getFramebufferSize();
     gui.backend.newFrame(@intCast(fb_size[0]), @intCast(fb_size[1]));
 
-    try self.drawMenu();
-    try self.nes.draw();
-    gui.showDemoWindow(null);
+    const viewport = gui.getMainViewport();
+    const dockspace_id = gui.DockSpaceOverViewport(0, viewport, .{});
+    try self.nes.draw(dockspace_id);
+    //gui.showMetricsWindow(null);
 
     gui.backend.draw();
     self.window.swapBuffers();
-}
-
-fn drawMenu(self: *App) !void {
-    if (gui.beginMainMenuBar()) {
-        if (gui.beginMenu("File", true)) {
-            if (gui.menuItem("Insert Cartridge", .{ .enabled = !self.nes.cartridge.loaded })) {
-                try self.nes.cartridge.insert();
-            }
-            if (gui.menuItem("Remove Cartridge", .{ .enabled = self.nes.cartridge.loaded })) {
-                self.nes.cartridge.remove();
-            }
-            if (gui.menuItem("Quit", .{})) {
-                glfw.setWindowShouldClose(self.window, true);
-            }
-            gui.endMenu();
-        }
-
-        if (gui.beginMenu("View", true)) {
-            if (gui.menuItem("Cartridge", .{ .selected = self.nes.cartridge.visible })) {
-                self.nes.cartridge.toggleVisibility();
-            }
-            gui.endMenu();
-        }
-        gui.endMainMenuBar();
-    }
 }

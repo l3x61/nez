@@ -22,8 +22,8 @@ trainer: []u8 = undefined,
 prg_rom: []u8 = undefined,
 chr_rom: []u8 = undefined,
 loaded: bool = false,
-visible: bool = false,
 filters: osd.Filters = undefined,
+window_name: [:0]const u8 = "Cartridge"[0.. :0],
 
 pub fn init(allocator: Allocator) Cartridge {
     return Cartridge{
@@ -65,39 +65,39 @@ pub fn remove(self: *Cartridge) void {
     self.loaded = false;
 }
 
+pub fn write(self: @This(), address: u16, data: u8) void {
+    _ = self;
+    _ = address;
+    _ = data;
+    unreachable;
+}
+
+pub fn read(self: @This(), address: u16) u8 {
+    _ = self;
+    _ = address;
+    unreachable;
+}
+
 pub fn draw(self: *Cartridge) !void {
-    if (!self.visible) return;
+    _ = gui.begin(self.window_name, .{});
+    if (!self.loaded) {
+        if (gui.button("Insert Cartridge", .{})) {
+            try self.insert();
+        }
+    } else {
+        if (gui.button("Remove Cartridge", .{})) {
+            self.remove();
+            gui.end();
+            return;
+        }
+        if (gui.collapsingHeader("File Information", .{ .default_open = true })) {
+            gui.text("File Name: {s}", .{self.file_name});
+            gui.text("File Size: {d} bytes", .{self.file_data.len});
 
-    if (gui.begin("Cartrige", .{})) {
-        if (!self.loaded) {
-            const width = gui.getContentRegionAvail()[0];
-            if (gui.button("Insert Cartridge", .{ .w = width }) == true) {
-                try self.insert();
-            }
-        } else {
-            const width = gui.getContentRegionAvail()[0];
-            gui.pushStyleColor1u(.{ .idx = .button, .c = 0xFA424266 });
-            gui.pushStyleColor1u(.{ .idx = .button_hovered, .c = 0xFA4242FF });
-            gui.pushStyleColor1u(.{ .idx = .button_active, .c = 0xFA0F0FFF });
-            if (gui.button("Remove Cartridge", .{ .w = width }) == true) {
-                self.remove();
-                gui.end();
-                return;
-            }
-            gui.popStyleColor(.{ .count = 3 });
-            if (gui.collapsingHeader("File Information", .{ .default_open = true })) {
-                gui.text("File Name: {s}", .{self.file_name});
-                gui.text("File Size: {d} bytes", .{self.file_data.len});
+            gui.separator();
 
-                gui.separator();
-
-                self.file_nes.draw();
-            }
+            self.file_nes.draw();
         }
     }
     gui.end();
-}
-
-pub fn toggleVisibility(self: *Cartridge) void {
-    self.visible = !self.visible;
 }
