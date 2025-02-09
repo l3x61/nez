@@ -9,13 +9,15 @@ const math = std.math;
 const print = std.debug.print;
 const Allocator = std.mem.Allocator;
 
+const builtin = @import("builtin");
+
 const osd = @import("zosdialog");
 const gui = @import("zgui");
 const NesFile = @import("../utils/NesFile.zig");
 
 allocator: Allocator = undefined,
 file_path: [:0]u8 = undefined,
-file_name: [:0]u8 = undefined,
+file_name: []const u8 = undefined,
 file_data: []u8 = undefined,
 file_nes: NesFile = undefined, // fields  point to `file_data`
 trainer: []u8 = undefined,
@@ -44,7 +46,7 @@ pub fn insert(self: *Cartridge) !void {
         defer file.close();
         self.file_path = file_path;
         self.file_data = try file.readToEndAlloc(self.allocator, math.maxInt(u32));
-        self.file_name = file_path[mem.lastIndexOf(u8, file_path, "/").? + 1 ..]; // TODO: probably does not work on windows
+        self.file_name = fs.path.basename(file_path)[0..]; //TODO: removes sentinel
         self.loaded = true;
 
         self.file_nes = NesFile.init(self.file_data) catch |err| {
