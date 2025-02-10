@@ -23,7 +23,7 @@ const Config = struct {
     height: c_int = 900,
     gl_major: c_int = 4,
     gl_minor: c_int = 0,
-    font_size: f32 = 19.0,
+    font_size: f32 = 22.0,
     clear_color: [4]f32 = [_]f32{ 0.1, 0.1, 0.1, 1.0 },
 };
 
@@ -117,8 +117,9 @@ pub fn run(self: *App) !void {
 }
 
 fn update(self: *App) void {
-    _ = self;
     glfw.pollEvents();
+    _ = self;
+    //self.nes.update();
 }
 
 fn draw(self: *App) !void {

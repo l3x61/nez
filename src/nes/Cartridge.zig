@@ -98,7 +98,7 @@ pub fn draw(self: *Cartridge) !void {
 
             gui.separator();
 
-            self.file_nes.draw();
+            try self.file_nes.draw(self.allocator);
         }
     }
     gui.end();

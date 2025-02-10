@@ -25,8 +25,13 @@ NES emulator written in Zig.
 - [nes-test-roms](https://github.com/christopherpow/nes-test-roms)
 
 ## References
-- [NES Architecture](https://www.copetti.org/writings/consoles/nes/)
-- [Nesdev Wiki](https://www.nesdev.org/wiki/Nesdev_Wiki)
+- NES
+    - [NES Architecture](https://www.copetti.org/writings/consoles/nes/)
+    - [Nesdev Wiki](https://www.nesdev.org/wiki/Nesdev_Wiki)
+- 6502
+    - [Visual 6502](http://visual6502.org)
+    - [Breadboard](https://github.com/TheParp/PRP-6502/wiki)
+    - [Emulator](https://masswerk.at/6502/)
 
 ## Issues
 - osdialog does not work on Wayland, most likely because of `libdecor-gtk`

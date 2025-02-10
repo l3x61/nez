@@ -10,6 +10,7 @@ const std = @import("std");
 const fs = std.fs;
 const mem = std.mem;
 const math = std.math;
+const Allocator = mem.Allocator;
 
 const header_size = 16;
 const header_magic = "NES\x1A";
@@ -216,7 +217,7 @@ pub fn init(slice: []const u8) !NesFile {
     };
 }
 
-pub fn draw(self: NesFile) void {
+pub fn draw(self: NesFile, allocator: Allocator) !void {
     gui.text("File Format: {s}", .{self.format});
 
     gui.separator();
@@ -228,20 +229,20 @@ pub fn draw(self: NesFile) void {
 
     gui.text("Trainer Size: {d} bytes", .{self.trainer.len});
     if (gui.collapsingHeader("Trainer", .{})) {
-        HexView.draw("Trainer Memory", self.trainer);
+        try HexView.draw("Trainer Memory", allocator, self.trainer);
     }
 
     gui.separator();
 
     gui.text("PRG ROM Size: {d} bytes", .{self.prg_rom.len});
     if (gui.collapsingHeader("PRG ROM", .{})) {
-        HexView.draw("PRG ROM Memory", self.prg_rom);
+        try HexView.draw("PRG ROM Memory", allocator, self.prg_rom);
     }
 
     gui.separator();
 
     gui.text("CHR ROM Size: {d} bytes", .{self.chr_rom.len});
     if (gui.collapsingHeader("CHR ROM", .{})) {
-        HexView.draw("CHR ROM Memory", self.chr_rom);
+        try HexView.draw("CHR ROM Memory", allocator, self.chr_rom);
     }
 }

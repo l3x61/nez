@@ -36,6 +36,10 @@ pub fn read(self: @This(), address: u16) u8 {
     unreachable;
 }
 
+pub fn update(self: *@This()) void {
+    self.cpu.update();
+}
+
 pub fn draw(self: *@This(), dockspace_id: u32) !void {
     if (self.first) {
         self.first = false;
@@ -50,20 +54,23 @@ pub fn draw(self: *@This(), dockspace_id: u32) !void {
         gui.dockBuilderFinish(dockspace_id);
     }
 
-    try self.drawWindow();
+    try self.drawSelf();
     try self.cartridge.draw();
     self.cpu.draw();
 }
 
-pub fn drawWindow(self: *@This()) !void {
+pub fn drawSelf(self: *@This()) !void {
     _ = gui.begin(self.window_name, .{});
     if (gui.button("Power", .{})) {
+        self.power = !self.power;
         self.cpu.powerUp();
     }
     gui.sameLine(.{});
+    gui.beginDisabled(.{ .disabled = !self.power });
     if (gui.button("Reset", .{})) {
         self.cpu.reset();
     }
+    gui.endDisabled();
 
     if (!self.cartridge.loaded) {
         if (gui.button("Insert Cartridge", .{})) {
