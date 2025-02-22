@@ -227,6 +227,15 @@ pub fn draw(self: NesFile, allocator: Allocator) !void {
 
     gui.separator();
 
+    const lsb: u12 = self.header.flags_6.mapper_lsb;
+    const mid: u12 = self.header.flags_7.mapper_mid;
+    const msb: u12 = self.header.flags_8.mapper_msb;
+    const mapper: u16 = msb << 8 | mid << 4 | lsb;
+
+    gui.text("Mapper Number: {d}", .{mapper});
+
+    gui.separator();
+
     gui.text("Trainer Size: {d} bytes", .{self.trainer.len});
     if (gui.collapsingHeader("Trainer", .{})) {
         try HexView.draw("Trainer Memory", allocator, self.trainer, 200);
