@@ -1,6 +1,7 @@
 const Cpu = @This();
 
 const std = @import("std");
+const log = std.log.scoped(.cpu);
 
 const Nes = @import("Nes.zig");
 
@@ -36,6 +37,7 @@ pc: u16 = undefined,
 nes: *Nes = undefined,
 
 pub fn init(nes: *Nes) Cpu {
+    log.debug("init", .{});
     return Cpu{
         .a = 0,
         .x = 0,
@@ -57,6 +59,7 @@ pub fn init(nes: *Nes) Cpu {
 }
 
 pub fn update(self: *Cpu) Cycles {
+    log.debug("update", .{});
     const opcode = self.read(self.pc);
     self.pc +%= 1;
     if (instruction_map[opcode]) |instruction| {
@@ -69,16 +72,11 @@ pub fn update(self: *Cpu) Cycles {
 }
 
 pub fn read(self: *Cpu, address: u16) u8 {
-    _ = self;
-    _ = address;
-    unreachable;
+    return self.nes.read(address);
 }
 
 pub fn write(self: *Cpu, address: u16, data: u8) void {
-    _ = self;
-    _ = address;
-    _ = data;
-    unreachable;
+    self.nes.write(address, data);
 }
 
 pub fn draw(self: *Cpu) void {

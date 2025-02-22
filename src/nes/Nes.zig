@@ -1,49 +1,61 @@
 const Nes = @This();
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const log = std.log.scoped(.nes);
 
 const gui = @import("zgui");
 pub const window_name: [:0]const u8 = "NES"[0.. :0];
 
 const Cartridge = @import("Cartridge.zig");
 const Cpu = @import("Cpu.zig");
+const Ram = @import("Ram.zig");
 
+allocator: Allocator = undefined,
 cartridge: Cartridge = undefined,
 cpu: Cpu = undefined,
+ram: Ram = undefined,
 power: bool = false,
 first: bool = true,
 run: bool = false,
 steps: usize = 0,
 
 pub fn init(allocator: Allocator) Nes {
+    log.debug("init", .{});
     var self = Nes{};
+    self.allocator = allocator;
     self.cartridge = Cartridge.init(allocator);
     self.cpu = Cpu.init(&self);
+    self.ram = Ram.init(allocator);
     return self;
 }
 
 pub fn deinit(self: *Nes) void {
+    log.debug("deinit", .{});
     self.cartridge.deinit();
 }
 
+// https://www.nesdev.org/wiki/CPU_memory_map
+
 pub fn write(self: Nes, address: u16, data: u8) void {
-    _ = self;
-    _ = address;
-    _ = data;
-    unreachable;
+    switch (address) {
+        0x0000...0x1FFF => self.ram.write(address, data),
+        else => unreachable,
+    }
 }
 
 pub fn read(self: Nes, address: u16) u8 {
-    _ = self;
-    _ = address;
-    unreachable;
+    return switch (address) {
+        0x0000...0x1FFF => self.ram.read(address),
+        else => unreachable,
+    };
 }
 
 pub fn update(self: *Nes) void {
-    if (!self.run or self.steps == 0) {
+    if (!self.run and self.steps == 0) {
         return;
     }
 
+    log.debug("update", .{});
     _ = self.cpu.update();
     if (self.steps > 0) {
         self.steps -= 1;
@@ -64,8 +76,9 @@ pub fn draw(self: *Nes, dockspace_id: u32) !void {
         _ = gui.dockBuilderSplitNode(dockspace_id, .left, 0.5, &dock_left, &dock_right);
 
         gui.dockBuilderDockWindow(Nes.window_name, dock_left);
-        gui.dockBuilderDockWindow(Cpu.window_name, dock_right);
         gui.dockBuilderDockWindow(Cartridge.window_name, dock_right);
+        gui.dockBuilderDockWindow(Ram.window_name, dock_right);
+        gui.dockBuilderDockWindow(Cpu.window_name, dock_right);
 
         gui.dockBuilderFinish(dockspace_id);
     }
@@ -73,6 +86,7 @@ pub fn draw(self: *Nes, dockspace_id: u32) !void {
     try self.drawSelf();
     try self.cartridge.draw();
     self.cpu.draw();
+    try self.ram.draw();
 }
 
 pub fn drawSelf(self: *Nes) !void {

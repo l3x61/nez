@@ -26,6 +26,10 @@ pub fn build(b: *std.Build) void {
     exe.root_module.addImport("zgui", zgui.module("root"));
     exe.linkLibrary(zgui.artifact("imgui"));
 
+    const zosdialog = b.dependency("zosdialog", .{ .target = target });
+    exe.root_module.addImport("zosdialog", zosdialog.module("root"));
+    exe.linkLibrary(zosdialog.artifact("zosdialog"));
+
     const install_assets_step = b.addInstallDirectory(.{
         .source_dir = b.path(assets_dir),
         .install_dir = .{ .custom = "" },

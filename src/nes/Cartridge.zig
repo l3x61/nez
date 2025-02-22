@@ -8,6 +8,7 @@ const mem = std.mem;
 const math = std.math;
 const print = std.debug.print;
 const Allocator = std.mem.Allocator;
+const log = std.log.scoped(.cartridge);
 
 const gui = @import("zgui");
 const osd = @import("zosdialog");
@@ -27,6 +28,7 @@ loaded: bool = false,
 filters: osd.Filters = undefined,
 
 pub fn init(allocator: Allocator) Cartridge {
+    log.debug("init", .{});
     return Cartridge{
         .allocator = allocator,
         .filters = osd.Filters.init("NES ROM:NES,nes,ROM,rom;All Files:*"),
@@ -34,12 +36,14 @@ pub fn init(allocator: Allocator) Cartridge {
 }
 
 pub fn deinit(self: *Cartridge) void {
+    log.debug("deinit", .{});
     self.remove();
     self.filters.deinit();
 }
 
 pub fn insert(self: *Cartridge) !void {
     self.remove();
+    log.info("insert", .{});
     if (try osd.file(self.allocator, .open, .{ .path = "./assets/roms/tests/cpu_reset", .filters = self.filters })) |file_path| {
         var file = try fs.openFileAbsoluteZ(file_path, .{});
         defer file.close();
@@ -61,6 +65,7 @@ pub fn insert(self: *Cartridge) !void {
 
 pub fn remove(self: *Cartridge) void {
     if (!self.loaded) return;
+    log.info("remove", .{});
     self.allocator.free(self.file_path);
     self.allocator.free(self.file_data);
     self.loaded = false;

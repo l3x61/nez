@@ -229,20 +229,20 @@ pub fn draw(self: NesFile, allocator: Allocator) !void {
 
     gui.text("Trainer Size: {d} bytes", .{self.trainer.len});
     if (gui.collapsingHeader("Trainer", .{})) {
-        try HexView.draw("Trainer Memory", allocator, self.trainer);
+        try HexView.draw("Trainer Memory", allocator, self.trainer, 200);
     }
 
     gui.separator();
 
     gui.text("PRG ROM Size: {d} bytes", .{self.prg_rom.len});
     if (gui.collapsingHeader("PRG ROM", .{})) {
-        try HexView.draw("PRG ROM Memory", allocator, self.prg_rom);
+        try HexView.draw("PRG ROM Memory", allocator, self.prg_rom, 200);
     }
 
     gui.separator();
 
     gui.text("CHR ROM Size: {d} bytes", .{self.chr_rom.len});
     if (gui.collapsingHeader("CHR ROM", .{})) {
-        try HexView.draw("CHR ROM Memory", allocator, self.chr_rom);
+        try HexView.draw("CHR ROM Memory", allocator, self.chr_rom, 200);
     }
 }

@@ -5,7 +5,7 @@ const String = std.ArrayList(u8);
 const gui = @import("zgui");
 const glfw = @import("zglfw");
 
-pub fn draw(label: [:0]const u8, allocator: Allocator, bytes: []const u8) !void {
+pub fn draw(label: [:0]const u8, allocator: Allocator, bytes: []const u8, height: f32) !void {
     const bytes_per_row = 16;
     const half_per_row = @divFloor(bytes_per_row, 2);
     const rows = @divFloor(bytes.len, bytes_per_row);
@@ -28,7 +28,8 @@ pub fn draw(label: [:0]const u8, allocator: Allocator, bytes: []const u8) !void 
         glfw.setClipboardString(glfw.getCurrentContext().?, slice);
     }
 
-    if (gui.beginChild(label, .{ .child_flags = .{ .border = true }, .h = 200 })) {
+    const actual_height = if (height < 0) gui.getContentRegionAvail()[1] else height;
+    if (gui.beginChild(label, .{ .child_flags = .{ .border = true }, .h = actual_height })) {
         var clipper = gui.ListClipper.init();
         clipper.begin(@intCast(rows), gui.getTextLineHeight());
 

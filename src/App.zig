@@ -3,6 +3,7 @@ const App = @This();
 const std = @import("std");
 const print = std.debug.print;
 const Allocator = std.mem.Allocator;
+const log = std.log.scoped(.app);
 
 const gui = @import("zgui");
 const glfw = @import("zglfw");
@@ -28,11 +29,12 @@ const Config = struct {
 };
 
 pub fn init(allocator: Allocator, config: Config) !App {
+    log.debug("init", .{});
     var buffer: [1024]u8 = undefined;
     const path = std.fs.selfExeDirPath(buffer[0..]) catch ".";
     try std.posix.chdir(path);
 
-    // init glfw
+    log.debug("init glfw", .{});
     try glfw.init();
 
     glfw.windowHint(.context_version_major, config.gl_major);
@@ -64,7 +66,7 @@ pub fn init(allocator: Allocator, config: Config) !App {
         @as(u32, @intCast(config.gl_minor)),
     );
 
-    // init gui
+    log.debug("init dear imgui", .{});
     gui.init(allocator);
 
     const scale_factor = scale_factor: {
@@ -102,6 +104,7 @@ pub fn init(allocator: Allocator, config: Config) !App {
 }
 
 pub fn deinit(self: *App) void {
+    log.debug("deinit", .{});
     self.nes.deinit();
     gui.backend.deinit();
     gui.deinit();
