@@ -9,11 +9,11 @@ const math = std.math;
 const print = std.debug.print;
 const Allocator = std.mem.Allocator;
 
-const builtin = @import("builtin");
-
-const osd = @import("zosdialog");
 const gui = @import("zgui");
+const osd = @import("zosdialog");
 const NesFile = @import("../utils/NesFile.zig");
+
+pub const window_name: [:0]const u8 = "Cartridge"[0.. :0];
 
 allocator: Allocator = undefined,
 file_path: [:0]u8 = undefined,
@@ -25,7 +25,6 @@ prg_rom: []u8 = undefined,
 chr_rom: []u8 = undefined,
 loaded: bool = false,
 filters: osd.Filters = undefined,
-window_name: [:0]const u8 = "Cartridge"[0.. :0],
 
 pub fn init(allocator: Allocator) Cartridge {
     return Cartridge{
@@ -81,7 +80,7 @@ pub fn read(self: @This(), address: u16) u8 {
 }
 
 pub fn draw(self: *Cartridge) !void {
-    _ = gui.begin(self.window_name, .{});
+    _ = gui.begin(Cartridge.window_name, .{});
     if (!self.loaded) {
         if (gui.button("Insert Cartridge", .{})) {
             try self.insert();

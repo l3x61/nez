@@ -32,6 +32,7 @@ NES emulator written in Zig.
     - [Visual 6502](http://visual6502.org)
     - [Breadboard](https://github.com/TheParp/PRP-6502/wiki)
     - [Emulator](https://masswerk.at/6502/)
+    - [6502 Reset](https://www.pagetable.com/?p=410)
 
 ## Issues
 - osdialog does not work on Wayland, most likely because of `libdecor-gtk`

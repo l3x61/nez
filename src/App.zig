@@ -118,8 +118,7 @@ pub fn run(self: *App) !void {
 
 fn update(self: *App) void {
     glfw.pollEvents();
-    _ = self;
-    //self.nes.update();
+    self.nes.update();
 }
 
 fn draw(self: *App) !void {
