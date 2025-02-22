@@ -172,6 +172,14 @@ const Header = struct {
     test "header size" {
         try std.testing.expectEqual(header_size, @sizeOf(@This()));
     }
+
+    pub fn getMapper(self: Header) u12 {
+        const lsb: u12 = self.flags_6.mapper_lsb;
+        const mid: u12 = self.flags_7.mapper_mid;
+        const msb: u12 = self.flags_8.mapper_msb;
+        const mapper: u12 = msb << 8 | mid << 4 | lsb;
+        return mapper;
+    }
 };
 
 header: Header = undefined,
@@ -227,12 +235,7 @@ pub fn draw(self: NesFile, allocator: Allocator) !void {
 
     gui.separator();
 
-    const lsb: u12 = self.header.flags_6.mapper_lsb;
-    const mid: u12 = self.header.flags_7.mapper_mid;
-    const msb: u12 = self.header.flags_8.mapper_msb;
-    const mapper: u16 = msb << 8 | mid << 4 | lsb;
-
-    gui.text("Mapper Number: {d}", .{mapper});
+    gui.text("Mapper Number: {d}", .{self.header.getMapper()});
 
     gui.separator();
 
